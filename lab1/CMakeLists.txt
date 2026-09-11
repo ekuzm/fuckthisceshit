@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(power_widget VERSION 1.0 LANGUAGES CXX)
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    message(FATAL_ERROR "Эта лабораторная работа предназначена только для Linux")
-endif()
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0>=3.22)
 pkg_check_modules(GLIB REQUIRED IMPORTED_TARGET gio-2.0>=2.52)
