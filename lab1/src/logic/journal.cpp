@@ -25,13 +25,13 @@ static std::string stamp() {
 static const char* kind_name(Kind kind) {
 	switch (kind) {
 	case Kind::Charger:
-		return "Питание";
+		return "Power";
 	case Kind::Charge:
-		return "Заряд";
+		return "Charge";
 	case Kind::Sleep:
-		return "Сон";
+		return "Sleep";
 	default:
-		return "Система";
+		return "System";
 	}
 }
 
@@ -43,17 +43,17 @@ void log(Logic& app, Kind kind, const std::string& message) {
 }
 
 void save_log(Logic& app, const std::string& path) {
-	std::string text = "Лабораторная работа №1. Вариант Б4\nЖурнал энергопитания\n\n";
+	std::string text = "Laboratory assignment No. 1. Variant B4\nPower log\n\n";
 	for (const auto& event : app.events) {
 		text += event.line + '\n';
 	}
 	GError* error = nullptr;
 	if (!g_file_set_contents(path.c_str(), text.c_str(), static_cast<gssize>(text.size()),
 	                         &error)) {
-		report_error(app, "Не удалось сохранить журнал: " + std::string(error->message));
+		report_error(app, "Failed to save log: " + std::string(error->message));
 		g_clear_error(&error);
 	} else {
-		log(app, Kind::System, "Журнал сохранён: " + std::string(path));
+		log(app, Kind::System, "Log saved: " + std::string(path));
 	}
 }
 

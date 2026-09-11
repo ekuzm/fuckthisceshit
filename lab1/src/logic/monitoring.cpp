@@ -12,7 +12,7 @@ static gboolean on_udev_ready(gint, GIOCondition condition, gpointer p) {
 	auto& current = *static_cast<Logic*>(p);
 	if (condition & (G_IO_ERR | G_IO_HUP)) {
 		current.udev_source = 0;
-		log(current, Kind::System, "Монитор udev отключён. Доступно ручное обновление");
+		log(current, Kind::System, "udev monitor disconnected. Manual refresh is available");
 		return G_SOURCE_REMOVE;
 	}
 	// Сокет libudev неблокирующий. Ограничиваем пакет для отзывчивости GUI.
@@ -36,7 +36,7 @@ static int on_prepare_for_sleep(sd_bus_message* message, void* p, sd_bus_error*)
 		return read;
 	}
 	log(current, Kind::Sleep,
-	    sleeping ? "Система готовится ко сну / гибернации" : "Система возобновила работу");
+	    sleeping ? "System is preparing to suspend / hibernate" : "System resumed");
 	if (!sleeping) {
 		refresh(current);
 	}
@@ -54,7 +54,7 @@ static gboolean on_bus_ready(gint, GIOCondition condition, gpointer p) {
 	}
 	if (status < 0 || (condition & (G_IO_ERR | G_IO_HUP))) {
 		current.bus_source = 0;
-		log(current, Kind::System, "Подписка на события сна logind потеряна");
+		log(current, Kind::System, "Lost subscription to logind sleep events");
 		return G_SOURCE_REMOVE;
 	}
 	return G_SOURCE_CONTINUE;
@@ -76,7 +76,7 @@ static void start_udev_monitor(Logic& app) {
 		}
 	}
 	if (!app.udev_source) {
-		log(app, Kind::System, "Не удалось подписаться на udev. Используйте «Обновить»");
+		log(app, Kind::System, "Failed to subscribe to udev. Use Refresh");
 	}
 }
 
@@ -100,7 +100,7 @@ static void start_sleep_monitor(Logic& app) {
 		}
 	}
 	if (!app.bus_source) {
-		log(app, Kind::System, "События сна logind недоступны; запросы кнопок журналируются");
+		log(app, Kind::System, "logind sleep events are unavailable; button requests are logged");
 	}
 }
 

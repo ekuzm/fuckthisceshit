@@ -19,12 +19,12 @@ static void disable_autostart(Logic& app) {
 	const bool removed = g_file_delete(file, nullptr, &error);
 	g_object_unref(file);
 	if (!removed && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND)) {
-		report_error(app, "Не удалось отключить автозапуск: " + std::string(error->message));
+		report_error(app, "Failed to disable autostart: " + std::string(error->message));
 		g_clear_error(&error);
 		return;
 	}
 	g_clear_error(&error);
-	log(app, Kind::System, "Автозапуск отключён");
+	log(app, Kind::System, "Autostart disabled");
 }
 
 static void enable_autostart(Logic& app) {
@@ -32,7 +32,7 @@ static void enable_autostart(Logic& app) {
 	GError* error = nullptr;
 	gchar* executable = g_file_read_link("/proc/self/exe", &error);
 	if (!executable) {
-		report_error(app, "Не удалось определить путь приложения: " + std::string(error->message));
+		report_error(app, "Failed to determine application path: " + std::string(error->message));
 		g_clear_error(&error);
 		return;
 	}
@@ -53,21 +53,21 @@ static void enable_autostart(Logic& app) {
 	g_free(executable);
 	const auto dir = std::string(g_get_user_config_dir()) + "/autostart";
 	if (g_mkdir_with_parents(dir.c_str(), 0700) != 0) {
-		report_error(app, "Не удалось создать каталог автозапуска: " +
+		report_error(app, "Failed to create autostart directory: " +
 		                      std::string(std::strerror(errno)));
 		return;
 	}
 	GKeyFile* entry = g_key_file_new();
 	g_key_file_set_string(entry, "Desktop Entry", "Type", "Application");
-	g_key_file_set_string(entry, "Desktop Entry", "Name", "Монитор энергопитания");
+	g_key_file_set_string(entry, "Desktop Entry", "Name", "Power Monitor");
 	g_key_file_set_string(entry, "Desktop Entry", "Exec", quoted.c_str());
 	g_key_file_set_boolean(entry, "Desktop Entry", "Terminal", FALSE);
 	g_key_file_set_boolean(entry, "Desktop Entry", "X-GNOME-Autostart-enabled", TRUE);
 	if (!g_key_file_save_to_file(entry, path.c_str(), &error)) {
-		report_error(app, "Не удалось сохранить автозапуск: " + std::string(error->message));
+		report_error(app, "Failed to save autostart entry: " + std::string(error->message));
 		g_clear_error(&error);
 	} else {
-		log(app, Kind::System, "Автозапуск включён: " + path);
+		log(app, Kind::System, "Autostart enabled: " + path);
 	}
 	g_key_file_unref(entry);
 }

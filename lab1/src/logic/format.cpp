@@ -14,32 +14,32 @@ std::string valid_utf8(const std::string& text) {
 
 std::string source_name(int online) {
 	if (online == 1) {
-		return "Работа от сети";
+		return "AC power";
 	}
 	if (online == 0) {
-		return "Работа от батареи";
+		return "Battery power";
 	}
-	return "Источник питания неизвестен";
+	return "Power source unknown";
 }
 
 std::string status_name(const std::string& status) {
 	if (status == "Charging") {
-		return "Заряжается";
+		return "Charging";
 	}
 	if (status == "Discharging") {
-		return "Разряжается";
+		return "Discharging";
 	}
 	if (status == "Full") {
-		return "Полностью заряжена";
+		return "Fully charged";
 	}
 	if (status == "Not charging") {
-		return "Не заряжается";
+		return "Not charging";
 	}
-	return "Состояние неизвестно";
+	return "Status unknown";
 }
 
 std::string percent(double value) {
-	return value < 0 ? "неизвестен" : std::to_string(static_cast<int>(std::round(value))) + "%";
+	return value < 0 ? "unknown" : std::to_string(static_cast<int>(std::round(value))) + "%";
 }
 
 } // namespace power_widget

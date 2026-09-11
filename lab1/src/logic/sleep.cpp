@@ -15,16 +15,16 @@ static void on_power_action_finished(GObject* source, GAsyncResult* result, gpoi
 	    g_subprocess_communicate_utf8_finish(child, result, nullptr, &stderr_text, &failure);
 	current.busy = false;
 	if (!completed || !g_subprocess_get_successful(child)) {
-		std::string reason = "неизвестная ошибка";
+		std::string reason = "unknown error";
 		if (failure) {
 			reason = failure->message;
 		} else if (stderr_text && *stderr_text) {
 			reason = stderr_text;
 		}
-		log(current, Kind::Sleep, "Запрос перехода отклонён: " + reason);
-		report_error(current, "Не удалось изменить режим питания: " + reason);
+		log(current, Kind::Sleep, "Power state change request rejected: " + reason);
+		report_error(current, "Failed to change power state: " + reason);
 	} else {
-		log(current, Kind::Sleep, "systemctl принял запрос перехода");
+		log(current, Kind::Sleep, "systemctl accepted the power state change request");
 	}
 	g_clear_error(&failure);
 	g_free(stderr_text);
@@ -36,7 +36,7 @@ void request_power_action(Logic& app, const char* action) {
 	if (app.busy) {
 		return;
 	}
-	log(app, Kind::Sleep, "Запрошен systemctl " + std::string(action));
+	log(app, Kind::Sleep, "Requested systemctl " + std::string(action));
 	GError* error = nullptr;
 	// Аргументы передаются без shell. systemctl использует штатную авторизацию logind/polkit.
 	auto* process =
@@ -44,8 +44,8 @@ void request_power_action(Logic& app, const char* action) {
 		                                               G_SUBPROCESS_FLAGS_STDERR_PIPE),
 		                 &error, "systemctl", action, nullptr);
 	if (!process) {
-		log(app, Kind::Sleep, "Не удалось вызвать systemctl: " + std::string(error->message));
-		report_error(app, "Не удалось вызвать systemctl: " + std::string(error->message));
+		log(app, Kind::Sleep, "Failed to run systemctl: " + std::string(error->message));
+		report_error(app, "Failed to run systemctl: " + std::string(error->message));
 		g_clear_error(&error);
 		return;
 	}

@@ -80,7 +80,7 @@ PowerState read_power() {
 	std::error_code error;
 	fs::directory_iterator it("/sys/class/power_supply", error), end;
 	if (error) {
-		state.error = "Не удалось прочитать power_supply: " + error.message();
+		state.error = "Failed to read power_supply: " + error.message();
 		return state;
 	}
 	bool adapter_seen = false, adapter_unknown = false, adapter_online = false;
@@ -116,7 +116,7 @@ PowerState read_power() {
 		state.batteries.push_back(battery);
 	}
 	if (error) {
-		state.error = "Ошибка перечисления power_supply: " + error.message();
+		state.error = "Failed to enumerate power_supply devices: " + error.message();
 	}
 	if (adapter_online) {
 		state.online = 1;

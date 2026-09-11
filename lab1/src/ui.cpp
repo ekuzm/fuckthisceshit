@@ -87,16 +87,16 @@ void draw_charge_ring(cairo_t* cr, double value) {
 
 std::string battery_detail(const Battery* battery) {
 	if (!battery) {
-		return "Данные батареи недоступны";
+		return "Battery data unavailable";
 	}
 	if (battery->status != "Discharging") {
 		return status_name(battery->status);
 	}
 	if (battery->minutes < 0) {
-		return "Оставшееся время неизвестно";
+		return "Remaining time unknown";
 	}
 	const auto minutes = static_cast<long long>(std::min(battery->minutes, 1e9));
-	return "Осталось ≈ " + std::to_string(minutes) + " мин";
+	return "Time left ≈ " + std::to_string(minutes) + " min";
 }
 
 gboolean draw(GtkWidget* widget, cairo_t* cr, gpointer data) {
@@ -109,10 +109,10 @@ gboolean draw(GtkWidget* widget, cairo_t* cr, gpointer data) {
 	const double value = battery ? battery->percent : -1;
 	draw_charge_ring(cr, value);
 	label(cr, value >= 0 ? percent(value) : "—", 48, 28);
-	label(cr, battery ? battery->name : "Нет батареи", 83, 11, true);
+	label(cr, battery ? battery->name : "No battery", 83, 11, true);
 	label(cr, source_name(app.logic.state.online), 122, 14);
 	label(cr, battery_detail(battery), 145, 12, true);
-	label(cr, "ЛКМ: переместить · ПКМ: меню", 178, 11, true);
+	label(cr, "Left drag: move · Right click: menu", 178, 11, true);
 	return TRUE;
 }
 
@@ -127,8 +127,8 @@ void show_error(App& app, const std::string& text) {
 void on_save_log(GtkButton*, gpointer data) {
 	auto& app = *static_cast<App*>(data);
 	auto* dialog = gtk_file_chooser_dialog_new(
-	    "Сохранить полный журнал", GTK_WINDOW(app.log_window), GTK_FILE_CHOOSER_ACTION_SAVE,
-	    "Отмена", GTK_RESPONSE_CANCEL, "Сохранить", GTK_RESPONSE_ACCEPT, nullptr);
+	    "Save full log", GTK_WINDOW(app.log_window), GTK_FILE_CHOOSER_ACTION_SAVE,
+	    "Cancel", GTK_RESPONSE_CANCEL, "Save", GTK_RESPONSE_ACCEPT, nullptr);
 	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "power-report.txt");
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -145,7 +145,7 @@ void on_filter_changed(GtkComboBox*, gpointer data) {
 
 void create_log_window(App& app) {
 	app.log_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(app.log_window), "Журнал энергопитания");
+	gtk_window_set_title(GTK_WINDOW(app.log_window), "Power log");
 	gtk_window_set_default_size(GTK_WINDOW(app.log_window), 780, 440);
 	// Закрытие журнала скрывает его, виджет и мониторинг продолжают работать.
 	g_signal_connect(app.log_window, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete),
@@ -155,7 +155,7 @@ void create_log_window(App& app) {
 	gtk_container_add(GTK_CONTAINER(app.log_window), box);
 	app.filter = gtk_combo_box_text_new();
 	for (const char* text :
-	     {"Все события", "Подключение / отключение ЗУ", "Изменение заряда", "Переходы в сон"}) {
+	     {"All events", "Charger connected / disconnected", "Charge changes", "Sleep transitions"}) {
 		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(app.filter), text);
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(app.filter), 0);
@@ -169,7 +169,7 @@ void create_log_window(App& app) {
 	gtk_text_view_set_monospace(GTK_TEXT_VIEW(app.log_view), TRUE);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(app.log_view), GTK_WRAP_WORD_CHAR);
 	gtk_container_add(GTK_CONTAINER(scroll), app.log_view);
-	auto* save = gtk_button_new_with_label("Сохранить полный журнал…");
+	auto* save = gtk_button_new_with_label("Save full log…");
 	g_signal_connect(save, "clicked", G_CALLBACK(on_save_log), &app);
 	gtk_box_pack_start(GTK_BOX(box), save, FALSE, FALSE, 0);
 }
@@ -192,8 +192,8 @@ void power_action(GtkMenuItem* item, gpointer data) {
 	const char* action = static_cast<const char*>(g_object_get_data(G_OBJECT(item), "action"));
 	auto* dialog = gtk_message_dialog_new(
 	    GTK_WINDOW(app.window), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_OK_CANCEL, "%s",
-	    std::strcmp(action, "suspend") == 0 ? "Перевести компьютер в спящий режим?"
-		                                    : "Перевести компьютер в гибернацию?");
+	    std::strcmp(action, "suspend") == 0 ? "Suspend the computer?"
+		                                    : "Hibernate the computer?");
 	const bool accepted = gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_OK;
 	gtk_widget_destroy(dialog);
 	if (!accepted) {
@@ -224,7 +224,7 @@ void add_battery_menu(App& app) {
 	if (app.logic.state.batteries.size() <= 1) {
 		return;
 	}
-	auto* choose = gtk_menu_item_new_with_label("Батарея");
+	auto* choose = gtk_menu_item_new_with_label("Battery");
 	auto* submenu = gtk_menu_new();
 	for (const auto& battery : app.logic.state.batteries) {
 		auto* item = gtk_menu_item_new_with_label(
@@ -250,20 +250,20 @@ void popup(App& app, GdkEvent* event) {
 		gtk_widget_destroy(app.menu);
 	}
 	app.menu = gtk_menu_new();
-	auto* suspend = menu_item(app, "Спящий режим", G_CALLBACK(power_action));
+	auto* suspend = menu_item(app, "Suspend", G_CALLBACK(power_action));
 	g_object_set_data(G_OBJECT(suspend), "action", const_cast<char*>("suspend"));
-	auto* hibernate = menu_item(app, "Гибернация", G_CALLBACK(power_action));
+	auto* hibernate = menu_item(app, "Hibernate", G_CALLBACK(power_action));
 	g_object_set_data(G_OBJECT(hibernate), "action", const_cast<char*>("hibernate"));
 	gtk_widget_set_sensitive(suspend, !app.logic.busy);
 	gtk_widget_set_sensitive(hibernate, !app.logic.busy);
-	menu_item(app, "Показать полный журнал", G_CALLBACK(show_log));
-	menu_item(app, "Обновить", G_CALLBACK(on_refresh));
+	menu_item(app, "Show full log", G_CALLBACK(show_log));
+	menu_item(app, "Refresh", G_CALLBACK(on_refresh));
 	add_battery_menu(app);
-	auto* automatic = gtk_check_menu_item_new_with_label("Автозапуск при входе");
+	auto* automatic = gtk_check_menu_item_new_with_label("Start automatically at login");
 	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(automatic), autostart_enabled());
 	g_signal_connect(automatic, "toggled", G_CALLBACK(autostart), &app);
 	gtk_menu_shell_append(GTK_MENU_SHELL(app.menu), automatic);
-	menu_item(app, "Выход", G_CALLBACK(on_exit));
+	menu_item(app, "Quit", G_CALLBACK(on_exit));
 	gtk_widget_show_all(app.menu);
 	gtk_menu_popup_at_pointer(GTK_MENU(app.menu), event);
 }
@@ -317,7 +317,7 @@ void apply_theme() {
 
 void create_main_window(App& app) {
 	app.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(app.window), "Монитор энергопитания · Б4");
+	gtk_window_set_title(GTK_WINDOW(app.window), "Power Monitor · B4");
 	gtk_window_set_decorated(GTK_WINDOW(app.window), FALSE);
 	gtk_window_set_resizable(GTK_WINDOW(app.window), FALSE);
 	gtk_window_set_default_size(GTK_WINDOW(app.window), 300, 200);
@@ -348,7 +348,7 @@ int run_ui(int argc, char** argv) {
 		show_error(app, text);
 	};
 
-	log(app.logic, Kind::System, "Монитор запущен. Вариант Б4");
+	log(app.logic, Kind::System, "Monitor started. Variant B4");
 	// Подписываемся до первого снимка, чтобы не потерять событие при запуске.
 	start_monitors(app.logic);
 	refresh(app.logic);
