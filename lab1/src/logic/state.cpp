@@ -4,8 +4,7 @@
 #include "logic/format.hpp"
 #include <utility>
 
-namespace power_widget {
-
+// Сравнивает старый и новый снимки: записывает изменения питания, батарей и ошибок чтения.
 static void log_power_changes(Logic& app, const PowerState& next) {
 	if (!next.error.empty() && next.error != app.state.error) {
 		log(app, Kind::System, next.error);
@@ -16,11 +15,12 @@ static void log_power_changes(Logic& app, const PowerState& next) {
 	if (!app.initialized || app.state.online != next.online) {
 		log(app, Kind::Charger, source_name(next.online));
 	}
-	for (const auto& battery : next.batteries) {
+	for (const Battery& battery : next.batteries) {
 		const Battery* old = find_battery(app.state, battery.name);
 		if (!old) {
 			log(app, Kind::System, "Battery detected: " + battery.name);
 		}
+		// Короткое замыкание ||: если старой батареи нет, к old->percent не обращаемся.
 		if (!old || old->percent != battery.percent) {
 			log(app, Kind::Charge, battery.name + ": charge " + percent(battery.percent));
 		}
@@ -28,7 +28,8 @@ static void log_power_changes(Logic& app, const PowerState& next) {
 			log(app, Kind::Charge, battery.name + ": " + status_name(battery.status));
 		}
 	}
-	for (const auto& battery : app.state.batteries) {
+	// Обратный проход обнаруживает батареи, которые были раньше, но исчезли из нового снимка.
+	for (const Battery& battery : app.state.batteries) {
 		if (!find_battery(next, battery.name)) {
 			log(app, Kind::System, "Battery removed: " + battery.name);
 		}
@@ -38,14 +39,14 @@ static void log_power_changes(Logic& app, const PowerState& next) {
 	}
 }
 
+// Читает новый снимок, записывает изменения в журнал, сохраняет данные и уведомляет интерфейс.
 void refresh(Logic& app) {
-	auto next = read_power();
+	PowerState next = read_power();
 	log_power_changes(app, next);
+	// Передаём содержимое нового снимка в состояние без копирования списков; next дальше не используем.
 	app.state = std::move(next);
 	app.initialized = true;
 	if (app.on_state_changed) {
 		app.on_state_changed();
 	}
 }
-
-} // namespace power_widget

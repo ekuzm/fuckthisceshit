@@ -1,5 +1,4 @@
 #pragma once
 
-namespace power_widget {
+// Инициализирует GTK, связывает интерфейс с логикой, запускает цикл событий и освобождает подписки при выходе.
 int run_ui(int argc, char** argv);
-}

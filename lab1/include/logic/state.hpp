@@ -11,8 +11,6 @@ struct udev_monitor;
 struct sd_bus;
 struct sd_bus_slot;
 
-namespace power_widget {
-
 enum class Kind { All, Charger, Charge, Sleep, System };
 struct Event {
 	Kind kind;
@@ -26,6 +24,7 @@ struct Logic {
 	PowerState state;
 	bool initialized = false;
 	bool busy = false;
+	// Необязательные обработчики UI: логика вызывает их, не зная об окнах и виджетах.
 	std::function<void()> on_state_changed;
 	std::function<void()> on_log_changed;
 	std::function<void(const std::string&)> on_error;
@@ -34,9 +33,9 @@ struct Logic {
 	udev_monitor* monitor{};
 	sd_bus* bus{};
 	sd_bus_slot* sleep_slot{};
+	// Идентификаторы регистраций в GLib нужны для удаления обработчиков; {} задаёт нули.
 	unsigned int udev_source{}, bus_source{};
 };
 
+// Читает новый снимок, записывает изменения в журнал, сохраняет данные и уведомляет интерфейс.
 void refresh(Logic& app);
-
-} // namespace power_widget

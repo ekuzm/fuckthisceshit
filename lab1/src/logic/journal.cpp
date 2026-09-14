@@ -4,8 +4,7 @@
 #include "logic/format.hpp"
 #include <gio/gio.h>
 
-namespace power_widget {
-
+// Записывает ошибку в журнал и передаёт её обработчику интерфейса, если он назначен.
 void report_error(Logic& app, const std::string& text) {
 	log(app, Kind::System, text);
 	if (app.on_error) {
@@ -13,6 +12,7 @@ void report_error(Logic& app, const std::string& text) {
 	}
 }
 
+// Возвращает местные дату и время с часовым поясом для записи журнала.
 static std::string stamp() {
 	GDateTime* now = g_date_time_new_now_local();
 	gchar* result = g_date_time_format(now, "%Y-%m-%d %H:%M:%S %z");
@@ -35,6 +35,7 @@ static const char* kind_name(Kind kind) {
 	}
 }
 
+// Добавляет событие с временем и категорией в память и уведомляет интерфейс об изменении журнала.
 void log(Logic& app, Kind kind, const std::string& message) {
 	app.events.push_back({kind, stamp() + " [" + kind_name(kind) + "] " + valid_utf8(message)});
 	if (app.on_log_changed) {
@@ -42,9 +43,10 @@ void log(Logic& app, Kind kind, const std::string& message) {
 	}
 }
 
+// Сохраняет все события в текстовый файл независимо от выбранного фильтра окна журнала.
 void save_log(Logic& app, const std::string& path) {
 	std::string text = "Laboratory assignment No. 1. Variant B4\nPower log\n\n";
-	for (const auto& event : app.events) {
+	for (const Event& event : app.events) {
 		text += event.line + '\n';
 	}
 	GError* error = nullptr;
@@ -56,5 +58,3 @@ void save_log(Logic& app, const std::string& path) {
 		log(app, Kind::System, "Log saved: " + std::string(path));
 	}
 }
-
-} // namespace power_widget
